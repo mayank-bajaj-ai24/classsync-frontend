@@ -1,4 +1,3 @@
-Sacn attendance.jsx
 // src/ScanAttendance.jsx
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useState } from "react";
