@@ -1,3 +1,4 @@
+Sacn attendance.jsx
 // src/ScanAttendance.jsx
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useState } from "react";
@@ -7,91 +8,72 @@ import { API_BASE } from "./config";
 export default function ScanAttendance() {
   const [status, setStatus] = useState("");
   const [scanInProgress, setScanInProgress] = useState(false);
-  const [zoom, setZoom] = useState(1); // 1x to start
 
   const user = JSON.parse(localStorage.getItem("cs_user") || "{}");
   const studentId = user.id;
 
   const markWithCode = async (sessionCode) => {
-try {
-setStatus("Getting your location...");
-await new Promise((resolve, reject) => {
-if (!navigator.geolocation) {
-resolve();
-return;
-}
+    try {
+      setStatus("Getting your location...");
+      await new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          resolve();
+          return;
+        }
 
-navigator.geolocation.getCurrentPosition(
-async (pos) => {
-try {
-await axios.post(`${API_BASE}/student/mark-attendance`, {
-studentId,
-sessionCode,
-lat: pos.coords.latitude,
-lng: pos.coords.longitude,
-});
-resolve();
-} catch (e) {
-reject(e);
-}
-},
-async (geoErr) => {
-console.error("Geolocation error:", geoErr);
-try {
-await axios.post(`${API_BASE}/student/mark-attendance`, {
-studentId,
-sessionCode,
-});
-resolve();
-} catch (e) {
-reject(e);
-}
-},
-{ enableHighAccuracy: true, timeout: 8000 }
-);
-});
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              await axios.post(`${API_BASE}/student/mark-attendance`, {
+                studentId,
+                sessionCode,
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              });
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          async (geoErr) => {
+            console.error("Geolocation error:", geoErr);
+            try {
+              await axios.post(`${API_BASE}/student/mark-attendance`, {
+                studentId,
+                sessionCode,
+              });
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      });
 
-setStatus("Attendance marked.");
-} catch (err) {
-console.error("ScanAttendance mark error:", err);
-setStatus(
-err.response?.data?.error || err.message || "Failed to mark attendance."
-);
-}
-};
+      setStatus("Attendance marked.");
+    } catch (err) {
+      console.error("ScanAttendance mark error:", err);
+      setStatus(
+        err.response?.data?.error || err.message || "Failed to mark attendance."
+      );
+    }
+  };
 
-const handleScan = async (results) => {
-if (!results || results.length === 0) return;
-if (scanInProgress) return;
-setScanInProgress(true);
+  const handleScan = async (results) => {
+    if (!results || results.length === 0) return;
+    if (scanInProgress) return;
+    setScanInProgress(true);
 
-const sessionCode = results[0].rawValue;
-console.log("ScanAttendance sessionCode:", sessionCode);
-await markWithCode(sessionCode);
-setScanInProgress(false);
-};
-
+    const sessionCode = results[0].rawValue;
+    console.log("ScanAttendance sessionCode:", sessionCode);
+    await markWithCode(sessionCode);
+    setScanInProgress(false);
+  };
 
   return (
     <div className="cs-dash-root">
       <h2 className="cs-panel-title">Scan class QR</h2>
-
-      {/* Simple zoom controls */}
-      <div style={{ marginBottom: "0.5rem" }}>
-        <label>
-          Zoom:{" "}
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="0.1"
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-          />
-        </label>
-        <span style={{ marginLeft: "0.5rem" }}>{zoom.toFixed(1)}x</span>
-      </div>
-
       <Scanner
         onScan={handleScan}
         onError={(err) => {
@@ -99,12 +81,7 @@ setScanInProgress(false);
           setStatus("Scanner error.");
           setScanInProgress(false);
         }}
-        constraints={{
-          facingMode: "environment",
-          advanced: [{ zoom }],
-        }}
       />
-
       {status && <p className="cs-panel-empty">{status}</p>}
     </div>
   );
